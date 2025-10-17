@@ -1,0 +1,9 @@
+Flask==2.3.2
+waitress==2.1.2
+numpy==1.26.4
+pandas==2.2.2
+Pillow==10.0.0
+requests==2.31.0
+scikit-learn==1.4.2
+tqdm==4.66.1
+ImageHash==4.3.1

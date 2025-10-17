@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visual Search Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --background: #121212;
+            --surface: #1e1e1e;
+            --primary: #00f5d4;
+            --primary-dark: #00bfa5;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --border: #333333;
+        }
+
+        body {
+            font-family: "Poppins", sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .navbar {
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .container {
+            max-width: 960px;
+            margin: auto;
+            padding: 2rem 1rem;
+        }
+
+        .header {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .header h1 {
+            font-weight: 700;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .upload-area {
+            background-color: var(--surface);
+            border-radius: 1rem;
+            padding: 2rem;
+            border: 2px dashed var(--border);
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+        
+        #drop-zone {
+            text-align: center;
+            padding: 2rem;
+            cursor: pointer;
+        }
+
+        #drop-zone.drag-over {
+            border-color: var(--primary);
+            background-color: #2a2a2a;
+        }
+
+        .form-control {
+            background-color: var(--background);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+        }
+
+        .form-control:focus {
+            background-color: var(--background);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 3px rgba(0, 245, 212, 0.25);
+            border-color: var(--primary);
+        }
+
+        .separator {
+            text-align: center;
+            margin: 1.5rem 0;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+        }
+
+        .separator::before,
+        .separator::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid var(--border);
+        }
+        .separator:not(:empty)::before {
+            margin-right: .5em;
+        }
+        .separator:not(:empty)::after {
+            margin-left: .5em;
+        }
+
+        .btn-analyze {
+            background-color: var(--primary);
+            border: none;
+            color: #000;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-analyze:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 3rem 0;
+        }
+
+        .loader div {
+            width: 15px;
+            height: 15px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loader .dot1 { animation-delay: -0.32s; }
+        .loader .dot2 { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        #results-container {
+            margin-top: 3rem;
+        }
+        
+        .uploaded-image-wrapper {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .uploaded-img {
+            max-width: 100%;
+            max-height: 350px;
+            border-radius: 1rem;
+            border: 2px solid var(--border);
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .result-card {
+            background-color: var(--surface);
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+        
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 245, 212, 0.1);
+        }
+        
+        .result-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+        
+        .card-body {
+            padding: 1rem;
+        }
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin: 0;
+        }
+        
+        .score-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: var(--primary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a class="navbar-brand" style="color: var(--text-primary); font-weight: 600;" href="#">
+                ✨ Visual Search Engine
+            </a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header class="header">
+            <h1>Uncover Similar Products</h1>
+            <p>Let our AI find visually similar products for you in seconds.</p>
+        </header>
+
+        <div class="upload-area">
+            <div id="drop-zone">
+                <input type="file" id="image-file" name="file" accept="image/*" hidden />
+                <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-cloud-arrow-up" viewBox="0 0 16 16" style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    <path fill-rule="evenodd" d="M7.646 5.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2z"/>
+                    <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/>
+                </svg>
+                <p><strong>Drag & Drop</strong> your image here, or click to select a file.</p>
+                <p id="file-name" class="text-secondary small"></p>
+            </div>
+            
+            <div class="separator">OR</div>
+            
+            <input type="url" class="form-control" id="image-url" placeholder="Paste an image URL (e.g., https://.../image.jpg)" />
+            
+            <button id="analyze-btn" class="btn-analyze mt-4">Analyze Image</button>
+        </div>
+
+        <div id="loading" class="d-none">
+            <div class="loader">
+                <div class="dot1"></div>
+                <div class="dot2"></div>
+                <div class="dot3"></div>
+            </div>
+            <p class="text-center text-secondary">Analyzing image and finding matches...</p>
+        </div>
+
+        <div id="results-container"></div>
+    </main>
+
+    <script>
+        const dropZone = document.getElementById("drop-zone");
+        const imageFile = document.getElementById("image-file");
+        const fileNameDisplay = document.getElementById("file-name");
+        const imageUrl = document.getElementById("image-url");
+        const analyzeBtn = document.getElementById("analyze-btn");
+        const loadingDiv = document.getElementById("loading");
+        const resultsContainer = document.getElementById("results-container");
+
+        let uploadedFile = null;
+
+        // Drag and Drop Logic
+        dropZone.addEventListener("click", () => imageFile.click());
+        dropZone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropZone.classList.add("drag-over");
+        });
+        dropZone.addEventListener("dragleave", () => {
+            dropZone.classList.remove("drag-over");
+        });
+        dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropZone.classList.remove("drag-over");
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                imageFile.files = files;
+                updateFileName();
+            }
+        });
+        imageFile.addEventListener("change", updateFileName);
+
+        function updateFileName() {
+            if (imageFile.files.length > 0) {
+                fileNameDisplay.textContent = `Selected file: ${imageFile.files[0].name}`;
+                imageUrl.value = ""; // Clear URL field if file is selected
+            }
+        }
+        
+        analyzeBtn.addEventListener("click", () => {
+            let data;
+            let isJson = false;
+
+            if (imageFile.files.length > 0) {
+                uploadedFile = imageFile.files[0];
+                data = new FormData();
+                data.append("file", uploadedFile);
+            } else if (imageUrl.value.trim()) {
+                uploadedFile = imageUrl.value.trim();
+                data = JSON.stringify({ url: uploadedFile });
+                isJson = true;
+            } else {
+                alert("Please select a file or enter a URL.");
+                return;
+            }
+            
+            handleSearch(data, isJson);
+        });
+
+
+        async function handleSearch(data, isJson = false) {
+            loadingDiv.classList.remove("d-none");
+            resultsContainer.innerHTML = "";
+
+            try {
+                const response = await fetch("/search", {
+                    method: "POST",
+                    body: data,
+                    headers: isJson ? { "Content-Type": "application/json" } : {},
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "Network response was not ok");
+                }
+
+                const results = await response.json();
+                displayResults(results);
+            } catch (error) {
+                console.error("Error:", error);
+                resultsContainer.innerHTML = `<div style="text-align:center; color: #ff5252; background-color: #2a2a2a; padding: 1rem; border-radius: 1rem;">An error occurred: ${error.message}. Please try again.</div>`;
+            } finally {
+                loadingDiv.classList.add("d-none");
+            }
+        }
+
+        function displayResults(results) {
+            resultsContainer.innerHTML = "";
+            if (!results || results.length === 0) {
+                resultsContainer.innerHTML = '<div style="text-align:center; color: #ffa726;">No similar products found.</div>';
+                return;
+            }
+
+            let uploadedImageUrl = (typeof uploadedFile === "string") ? uploadedFile : URL.createObjectURL(uploadedFile);
+
+            let html = `
+                <div class="uploaded-image-wrapper">
+                    <h3 style="margin-bottom: 1.5rem; text-align: center;">Your Image</h3>
+                    <img src="${uploadedImageUrl}" class="uploaded-img" alt="Uploaded Image">
+                </div>
+                <div class="separator"></div>
+                <h3 style="margin-bottom: 1.5rem; text-align: center;">Similar Products Found</h3>
+                <div class="results-grid">
+            `;
+
+            results.forEach((product) => {
+                const productName = product.product_name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                html += `
+                    <div class="result-card">
+                        <img src="${product.image_path}" alt="${productName}">
+                        <div class="score-badge">${product.similarity.toFixed(2)}</div>
+                        <div class="card-body">
+                            <h6 class="card-title">${productName}</h6>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += "</div>";
+            resultsContainer.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
