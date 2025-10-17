@@ -6,7 +6,7 @@ Consequently, the project pivoted to a more efficient strategy: Perceptual Hashi
 
 This hash-based method is extremely fast and has a very low memory footprint. It showcases a practical, problem-solving mindset by prioritizing the delivery of a fully functional and deployable application that operates successfully within the specified technical constraints.
 
-Link: https://visual-product-matcher-ikzq.onrender.com/
+Link: https://visual-product-matcher-2-nd1n.onrender.com
 
 Name: Gowtham
 
